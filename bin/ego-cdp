@@ -1,0 +1,110 @@
+#!/usr/bin/env node
+
+const { spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+
+const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const USER_DATA_DIR = path.join(process.env.HOME, '.chrome');
+const PID_FILE = path.join(USER_DATA_DIR, 'cdp.pid');
+const PORT = 9222;
+
+const CHROME_ARGS = [
+  `--remote-debugging-port=${PORT}`,
+  `--user-data-dir=${USER_DATA_DIR}`,
+  '--profile-directory=Ego',
+  '--silent-launch',
+  '--no-first-run',
+  '--no-default-browser-check',
+  '--disable-component-update',
+  '--disable-session-crashed-bubble',
+  '--hide-crash-restore-bubble',
+];
+
+function readPid() {
+  try {
+    return parseInt(fs.readFileSync(PID_FILE, 'utf8').trim(), 10);
+  } catch {
+    return null;
+  }
+}
+
+function isRunning(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function start() {
+  const pid = readPid();
+  if (pid && isRunning(pid)) {
+    console.log(`Already running (pid ${pid}).`);
+    return;
+  }
+
+  fs.mkdirSync(USER_DATA_DIR, { recursive: true });
+
+  const child = spawn(CHROME, CHROME_ARGS, {
+    detached: true,
+    stdio: 'ignore',
+  });
+  child.unref();
+
+  fs.writeFileSync(PID_FILE, String(child.pid));
+  console.log(`Started (pid ${child.pid}).`);
+}
+
+function stop() {
+  const pid = readPid();
+  if (!pid || !isRunning(pid)) {
+    console.log('Not running.');
+    try { fs.unlinkSync(PID_FILE); } catch {}
+    return;
+  }
+
+  process.kill(pid, 'SIGTERM');
+  try { fs.unlinkSync(PID_FILE); } catch {}
+  console.log(`Stopped (pid ${pid}).`);
+}
+
+function status() {
+  const pid = readPid();
+  if (!pid || !isRunning(pid)) {
+    console.log('Not running.');
+    return;
+  }
+
+  const req = http.get(`http://localhost:${PORT}/json/version`, (res) => {
+    let data = '';
+    res.on('data', (chunk) => data += chunk);
+    res.on('end', () => {
+      try {
+        const info = JSON.parse(data);
+        console.log(`Running (pid ${pid}) — ${info.Browser}`);
+      } catch {
+        console.log(`Running (pid ${pid}) — CDP not responding yet.`);
+      }
+    });
+  });
+  req.on('error', () => {
+    console.log(`Running (pid ${pid}) — CDP not responding yet.`);
+  });
+  req.setTimeout(2000, () => {
+    req.destroy();
+    console.log(`Running (pid ${pid}) — CDP timed out.`);
+  });
+}
+
+const command = process.argv[2];
+switch (command) {
+  case 'start':  start();  break;
+  case 'stop':   stop();   break;
+  case 'status': status(); break;
+  default:
+    console.error(`Usage: ${path.basename(process.argv[1])} {start|stop|status}`);
+    process.exit(1);
+}

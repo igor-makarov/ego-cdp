@@ -1,0 +1,9 @@
+{
+  "name": "ego-cdp",
+  "version": "1.0.0",
+  "description": "Launch and manage Chrome with CDP (Chrome DevTools Protocol)",
+  "bin": {
+    "ego-cdp": "bin/ego-cdp"
+  },
+  "license": "MIT"
+}
