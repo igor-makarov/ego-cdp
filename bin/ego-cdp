@@ -26,6 +26,7 @@ function getRandomPort() {
 
 function buildCaddyJson(cdpPort) {
   return {
+    admin: { disabled: true },
     apps: {
       http: {
         servers: {
@@ -117,7 +118,7 @@ function stopCaddy() {
     return;
   }
 
-  spawn('caddy', ['stop'], { stdio: 'ignore' });
+  process.kill(pid, 'SIGTERM');
   try { fs.unlinkSync(CADDY_PID_FILE); } catch {}
   console.log(`Caddy stopped (pid ${pid}).`);
 }
