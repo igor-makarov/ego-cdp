@@ -5,7 +5,11 @@ description: Use Chrome CDP via ego-cdp for tab listing, navigation, JS evaluati
 
 # Browser Use
 
-Chrome with CDP is auto-launched on first use.
+## Lifecycle
+
+- `../../bin/ego-cdp status` - check if Chrome and Caddy are running
+- `../../bin/ego-cdp start` - start Chrome and Caddy reverse proxy (detects partial state and restarts if needed)
+- `../../bin/ego-cdp stop` - stop both Chrome and Caddy
 
 ## CDP Direct Access
 
@@ -14,8 +18,10 @@ Use `../../bin/ego-cdp http [--method=METHOD] [--output=FILE] <path>` for HTTP e
 - `../../bin/ego-cdp http /json/list` - list all tabs
 - `../../bin/ego-cdp http /json/version` - browser version
 - `../../bin/ego-cdp http --method=PUT /json/new` - create blank tab (returns target ID)
+- `../../bin/ego-cdp http --method=PUT '/json/new?https://example.com'` - open URL in new tab
+- `../../bin/ego-cdp http --method=PUT /json/close/<targetId>` - close a tab
 
-Use `../../bin/ego-cdp ws <targetId> '<message>' [--timeout=ms] [--output=FILE]` for WebSocket commands (default 60s):
+Use `../../bin/ego-cdp ws <targetId> '<message>' [--timeout=ms] [--output=FILE]` for WebSocket commands (default 60000):
 
 - `../../bin/ego-cdp ws <id> '{"id":1,"method":"Runtime.evaluate","params":{"expression":"document.title"}}'` - run JS
 - `../../bin/ego-cdp ws <id> '{"id":1,"method":"Page.navigate","params":{"url":"https://example.com"}}'` - navigate
