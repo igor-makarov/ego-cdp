@@ -1,6 +1,7 @@
 {
   "name": "ego-cdp",
   "version": "1.0.0",
+  "type": "module",
   "description": "Launch and manage Chrome with CDP (Chrome DevTools Protocol)",
   "bin": {
     "ego-cdp": "bin/ego-cdp"

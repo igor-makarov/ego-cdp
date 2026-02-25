@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-const path = require('path');
-const chrome = require('../lib/launch/chrome');
-const caddy = require('../lib/launch/caddy');
-const { isRunning, getProxyPort } = require('../lib/launch/common');
-const { runHttpCommand } = require('../lib/cdp/http');
+import path from 'path';
+import * as chrome from '../lib/launch/chrome.js';
+import * as caddy from '../lib/launch/caddy.js';
+import { isRunning, getProxyPort } from '../lib/launch/common.js';
+import { runHttpCommand } from '../lib/cdp/http.js';
 
 async function start() {
   const chromePid = chrome.getPid();
