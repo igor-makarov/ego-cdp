@@ -95,14 +95,14 @@ async function ws() {
     allowPositionals: true,
   });
 
-  const [targetId, message] = positionals;
-  if (!targetId || !message) {
-    console.error('Usage: ego-cdp ws <targetId> <message> [--timeout=ms] [--output=FILE]');
+  const [path, message] = positionals;
+  if (!path || !message) {
+    console.error('Usage: ego-cdp ws <path> <message> [--timeout=ms] [--output=FILE]');
     process.exit(1);
   }
 
   const result = await runWsCommand({
-    targetId,
+    path,
     message,
     timeout: parseInt(values.timeout, 10),
   });

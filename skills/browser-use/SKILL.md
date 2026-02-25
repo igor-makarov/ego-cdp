@@ -7,24 +7,24 @@ description: Use Chrome CDP via ego-cdp for tab listing, navigation, JS evaluati
 
 ## Lifecycle
 
-- `../../bin/ego-cdp status` - check if Chrome and Caddy are running
-- `../../bin/ego-cdp start` - start Chrome and Caddy reverse proxy (detects partial state and restarts if needed)
-- `../../bin/ego-cdp stop` - stop both Chrome and Caddy
+- `../../bin/ego-cdp status` - check if Chrome and Caddy are running - allowed by sandbox
+- `../../bin/ego-cdp start` - start Chrome and Caddy reverse proxy (detects partial state and restarts if needed) - needs sandbox escalation
+- `../../bin/ego-cdp stop` - stop both Chrome and Caddy - needs sandbox escalation
 
-## CDP Direct Access
+## CDP Direct Access - allowed by sandbox
 
 Use `../../bin/ego-cdp http [--method=METHOD] [--output=FILE] <path>` for HTTP endpoints (default GET):
 
 - `../../bin/ego-cdp http /json/list` - list all tabs
-- `../../bin/ego-cdp http /json/version` - browser version
-- `../../bin/ego-cdp http --method=PUT /json/new` - create blank tab (returns target ID)
-- `../../bin/ego-cdp http --method=PUT '/json/new?https://example.com'` - open URL in new tab
+- `../../bin/ego-cdp http /json/version` - browser version (includes `webSocketDebuggerUrl` with browser WS path)
 - `../../bin/ego-cdp http --method=PUT /json/close/<targetId>` - close a tab
 
-Use `../../bin/ego-cdp ws <targetId> '<message>' [--timeout=ms] [--output=FILE]` for WebSocket commands (default 60000):
+Use `../../bin/ego-cdp ws <path> '<message>' [--timeout=ms] [--output=FILE]` for WebSocket commands (default 60000).
+The `<path>` is a raw WebSocket path: `/devtools/page/<targetId>` for a tab, or `/devtools/browser/<guid>` for browser-level commands (get the guid from `/json/version`).
 
-- `../../bin/ego-cdp ws <id> '{"id":1,"method":"Runtime.evaluate","params":{"expression":"document.title"}}'` - run JS
-- `../../bin/ego-cdp ws <id> '{"id":1,"method":"Page.navigate","params":{"url":"https://example.com"}}'` - navigate
+- `../../bin/ego-cdp ws /devtools/page/<id> '{"id":1,"method":"Runtime.evaluate","params":{"expression":"document.title"}}'` - run JS
+- `../../bin/ego-cdp ws /devtools/page/<id> '{"id":1,"method":"Page.navigate","params":{"url":"https://example.com"}}'` - navigate
+- `../../bin/ego-cdp ws /devtools/browser/<guid> '{"id":1,"method":"Target.createTarget","params":{"url":"about:blank","background":true}}'` - create blank tab in background (no focus steal)
 
 ## General instructions
 
