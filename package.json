@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Launch and manage Chrome with CDP (Chrome DevTools Protocol)",
+  "keywords": ["pi-package"],
   "bin": {
     "ego-cdp": "bin/ego-cdp"
   },
   "license": "MIT",
   "dependencies": {
     "undici": "^7.22.0"
+  },
+  "pi": {
+    "skills": ["./skills"]
   }
 }
