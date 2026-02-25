@@ -8,6 +8,7 @@ import * as caddy from '../lib/launch/caddy.js';
 import { isRunning } from '../lib/common/pid.js';
 import { getProxyPort } from '../lib/common/config.js';
 import { runHttpCommand } from '../lib/cdp/http.js';
+import { runWsCommand } from '../lib/cdp/ws.js';
 
 async function start() {
   const chromePid = chrome.getPid();
@@ -84,13 +85,44 @@ async function http() {
   }
 }
 
+async function ws() {
+  const { values, positionals } = parseArgs({
+    args: process.argv.slice(3),
+    options: {
+      timeout: { type: 'string', short: 't', default: '60000' },
+      output: { type: 'string', short: 'o' },
+    },
+    allowPositionals: true,
+  });
+
+  const [targetId, message] = positionals;
+  if (!targetId || !message) {
+    console.error('Usage: ego-cdp ws <targetId> <message> [--timeout=ms] [--output=FILE]');
+    process.exit(1);
+  }
+
+  const result = await runWsCommand({
+    targetId,
+    message,
+    timeout: parseInt(values.timeout, 10),
+  });
+
+  if (values.output) {
+    fs.writeFileSync(values.output, result);
+    console.log(`Written to ${values.output}`);
+  } else {
+    process.stdout.write(result);
+  }
+}
+
 const command = process.argv[2];
 switch (command) {
   case 'start':  start();  break;
   case 'stop':   stop();   break;
   case 'status': status(); break;
   case 'http':   http();   break;
+  case 'ws':     ws();     break;
   default:
-    console.error(`Usage: ${path.basename(process.argv[1])} {start|stop|status|http}`);
+    console.error(`Usage: ${path.basename(process.argv[1])} {start|stop|status|http|ws}`);
     process.exit(1);
 }
