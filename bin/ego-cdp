@@ -3,7 +3,8 @@
 import path from 'path';
 import * as chrome from '../lib/launch/chrome.js';
 import * as caddy from '../lib/launch/caddy.js';
-import { isRunning, getProxyPort } from '../lib/launch/common.js';
+import { isRunning } from '../lib/common/pid.js';
+import { getProxyPort } from '../lib/common/config.js';
 import { runHttpCommand } from '../lib/cdp/http.js';
 
 async function start() {
