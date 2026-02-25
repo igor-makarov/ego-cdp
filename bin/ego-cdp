@@ -26,21 +26,21 @@ async function status() {
   const caddyPid = caddy.getPid();
 
   if (!chromePid) {
-    console.log('Chrome: not running.');
+    console.log('Chrome: no pid');
   } else {
     try {
       const res = await fetch(`http://cdp.test:${PROXY_PORT}/json/version`, { signal: AbortSignal.timeout(2000) });
       const info = await res.json();
-      console.log(`Chrome: running (pid ${chromePid}) — ${info.Browser}`);
+      console.log(`Chrome: pid ${chromePid} — ${info.Browser}`);
     } catch {
-      console.log(`Chrome: running (pid ${chromePid}) — CDP not responding yet.`);
+      console.log(`Chrome: pid ${chromePid} — CDP not responding`);
     }
   }
 
   if (!caddyPid) {
-    console.log('Caddy: not running.');
+    console.log('Caddy: no pid');
   } else {
-    console.log(`Caddy: running (pid ${caddyPid}, proxy port ${PROXY_PORT}).`);
+    console.log(`Caddy: pid ${caddyPid}, proxy port ${PROXY_PORT}`);
   }
 }
 

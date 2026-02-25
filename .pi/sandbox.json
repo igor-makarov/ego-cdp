@@ -5,7 +5,7 @@
     ]
   },
   "unsandboxedCommands": [
-    "ego-cdp start",
-    "ego-cdp stop"
+    "bin/ego-cdp start",
+    "bin/ego-cdp stop"
   ]
 }
