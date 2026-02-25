@@ -46,7 +46,8 @@ async function status() {
   } else {
     try {
       const info = JSON.parse(await runHttpCommand({ path: '/json/version' }));
-      console.log(`Chrome: pid ${chromePid} — ${info.Browser}`);
+      const guid = info.webSocketDebuggerUrl?.split('/').pop() ?? 'unknown';
+      console.log(`Chrome: pid ${chromePid} — ${info.Browser} — browser guid ${guid}`);
     } catch {
       console.log(`Chrome: pid ${chromePid} — CDP not responding`);
     }
