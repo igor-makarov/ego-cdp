@@ -4,12 +4,28 @@ const { EnvHttpProxyAgent, setGlobalDispatcher } = require('undici');
 const path = require('path');
 const chrome = require('../lib/launch/chrome');
 const caddy = require('../lib/launch/caddy');
+const { isRunning } = require('../lib/launch/common');
 
 setGlobalDispatcher(new EnvHttpProxyAgent());
 
 const PROXY_PORT = parseInt(process.env.PORT, 10) || 9222;
 
 async function start() {
+  const chromePid = chrome.getPid();
+  const caddyPid = caddy.getPid();
+  const chromeAlive = chromePid && isRunning(chromePid);
+  const caddyAlive = caddyPid && isRunning(caddyPid);
+
+  if (chromeAlive && caddyAlive) {
+    console.log(`Already running (chrome ${chromePid}, caddy ${caddyPid}).`);
+    return;
+  }
+
+  if (chromeAlive !== caddyAlive) {
+    console.log('Partial state detected, restarting...');
+    stop();
+  }
+
   const cdpPort = await chrome.start();
   if (cdpPort) {
     caddy.start(PROXY_PORT, cdpPort);
