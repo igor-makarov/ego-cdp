@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+import fs from 'fs';
 import path from 'path';
+import { parseArgs } from 'util';
 import * as chrome from '../lib/launch/chrome.js';
 import * as caddy from '../lib/launch/caddy.js';
 import { isRunning } from '../lib/common/pid.js';
@@ -56,12 +58,39 @@ async function status() {
   }
 }
 
+async function http() {
+  const { values, positionals } = parseArgs({
+    args: process.argv.slice(3),
+    options: {
+      method: { type: 'string', short: 'm', default: 'GET' },
+      output: { type: 'string', short: 'o' },
+    },
+    allowPositionals: true,
+  });
+
+  const urlPath = positionals[0];
+  if (!urlPath) {
+    console.error('Usage: ego-cdp http [--method=METHOD] [--output=FILE] <url-path>');
+    process.exit(1);
+  }
+
+  const result = await runHttpCommand({ method: values.method, path: urlPath });
+
+  if (values.output) {
+    fs.writeFileSync(values.output, result);
+    console.log(`Written to ${values.output}`);
+  } else {
+    process.stdout.write(result);
+  }
+}
+
 const command = process.argv[2];
 switch (command) {
   case 'start':  start();  break;
   case 'stop':   stop();   break;
   case 'status': status(); break;
+  case 'http':   http();   break;
   default:
-    console.error(`Usage: ${path.basename(process.argv[1])} {start|stop|status}`);
+    console.error(`Usage: ${path.basename(process.argv[1])} {start|stop|status|http}`);
     process.exit(1);
 }
