@@ -1,14 +1,10 @@
 #!/usr/bin/env node
 
-const { EnvHttpProxyAgent, setGlobalDispatcher } = require('undici');
 const path = require('path');
 const chrome = require('../lib/launch/chrome');
 const caddy = require('../lib/launch/caddy');
-const { isRunning } = require('../lib/launch/common');
-
-setGlobalDispatcher(new EnvHttpProxyAgent());
-
-const PROXY_PORT = parseInt(process.env.PORT, 10) || 9222;
+const { isRunning, getProxyPort } = require('../lib/launch/common');
+const { runHttpCommand } = require('../lib/cdp/http');
 
 async function start() {
   const chromePid = chrome.getPid();
@@ -28,7 +24,7 @@ async function start() {
 
   const cdpPort = await chrome.start();
   if (cdpPort) {
-    caddy.start(PROXY_PORT, cdpPort);
+    caddy.start(getProxyPort(), cdpPort);
   }
 }
 
@@ -45,8 +41,7 @@ async function status() {
     console.log('Chrome: no pid');
   } else {
     try {
-      const res = await fetch(`http://cdp.test:${PROXY_PORT}/json/version`, { signal: AbortSignal.timeout(2000) });
-      const info = await res.json();
+      const info = JSON.parse(await runHttpCommand({ path: '/json/version' }));
       console.log(`Chrome: pid ${chromePid} — ${info.Browser}`);
     } catch {
       console.log(`Chrome: pid ${chromePid} — CDP not responding`);
@@ -56,7 +51,7 @@ async function status() {
   if (!caddyPid) {
     console.log('Caddy: no pid');
   } else {
-    console.log(`Caddy: pid ${caddyPid}, proxy port ${PROXY_PORT}`);
+    console.log(`Caddy: pid ${caddyPid}, proxy port ${getProxyPort()}`);
   }
 }
 
