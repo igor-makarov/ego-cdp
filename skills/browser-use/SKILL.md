@@ -46,6 +46,7 @@ Use `../../bin/ego-cdp ws <path> '<message>' [--timeout=ms] [--output=FILE]` for
 - Prefer not to take screenshots - it is slower
 - YOU MUST Use `Input.*` commands to interact with UI elements - other ways are a waste of time
   - Prefer: synthesized commands such as `synthesizeTapGesture`, `insertText`, `synthesizeScrollGesture`
+  - Prefer: `dispatchKeyEvent` with `commands` property
   - Last resort: raw events such as `dispatchKeyEvent`, `dispatchMouseEvent`
   - Check input/checkbox values before interaction - otherwise you might clobber or make incorrect changes
 - DO NOT use arbitrary network calls - they will be blocked by sandbox
