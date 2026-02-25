@@ -1,174 +1,32 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process');
-const net = require('net');
-const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const chrome = require('../lib/launch/chrome');
+const caddy = require('../lib/launch/caddy');
 
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const USER_DATA_DIR = path.join(process.env.HOME, '.chrome');
-const PID_FILE = path.join(USER_DATA_DIR, 'cdp.pid');
-const CADDY_PID_FILE = path.join(USER_DATA_DIR, 'caddy.pid');
-const CADDY_CONFIG = path.join(USER_DATA_DIR, 'caddy.json');
 const PROXY_PORT = parseInt(process.env.PORT, 10) || 9222;
 
-function getRandomPort() {
-  return new Promise((resolve, reject) => {
-    const srv = net.createServer();
-    srv.listen(0, '127.0.0.1', () => {
-      const port = srv.address().port;
-      srv.close(() => resolve(port));
-    });
-    srv.on('error', reject);
-  });
-}
-
-function buildCaddyJson(cdpPort) {
-  return {
-    admin: { disabled: true },
-    apps: {
-      http: {
-        servers: {
-          cdp: {
-            listen: [`:${PROXY_PORT}`],
-            automatic_https: { disable: true },
-            routes: [{
-              match: [{ host: ['cdp.test'] }],
-              handle: [{
-                handler: 'reverse_proxy',
-                upstreams: [{ dial: `localhost:${cdpPort}` }],
-                headers: {
-                  request: {
-                    set: { Host: ['localhost'] }
-                  }
-                }
-              }]
-            }]
-          }
-        }
-      }
-    }
-  };
-}
-
-function buildChromeArgs(cdpPort) {
-  return [
-    `--remote-debugging-port=${cdpPort}`,
-    `--user-data-dir=${USER_DATA_DIR}`,
-    '--profile-directory=Ego',
-    '--silent-launch',
-    '--no-first-run',
-    '--no-default-browser-check',
-    '--disable-component-update',
-    '--disable-session-crashed-bubble',
-    '--hide-crash-restore-bubble',
-  ];
-}
-
-function readPid() {
-  try {
-    return parseInt(fs.readFileSync(PID_FILE, 'utf8').trim(), 10);
-  } catch {
-    return null;
-  }
-}
-
-function isRunning(pid) {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function readCaddyPid() {
-  try {
-    return parseInt(fs.readFileSync(CADDY_PID_FILE, 'utf8').trim(), 10);
-  } catch {
-    return null;
-  }
-}
-
-function startCaddy(cdpPort) {
-  const pid = readCaddyPid();
-  if (pid && isRunning(pid)) {
-    console.log(`Caddy already running (pid ${pid}).`);
-    return;
-  }
-
-  fs.writeFileSync(CADDY_CONFIG, JSON.stringify(buildCaddyJson(cdpPort), null, 2));
-
-  const child = spawn('caddy', ['start', '--config', CADDY_CONFIG, '--pidfile', CADDY_PID_FILE], {
-    detached: true,
-    stdio: 'ignore',
-  });
-  child.unref();
-
-  const configDisplay = CADDY_CONFIG.replace(process.env.HOME, '~');
-  console.log(`Caddy starting (cdp.test:${PROXY_PORT} → localhost:${cdpPort}), config: ${configDisplay}`);
-}
-
-function stopCaddy() {
-  const pid = readCaddyPid();
-  if (!pid || !isRunning(pid)) {
-    console.log('Caddy not running.');
-    try { fs.unlinkSync(CADDY_PID_FILE); } catch {}
-    return;
-  }
-
-  process.kill(pid, 'SIGTERM');
-  try { fs.unlinkSync(CADDY_PID_FILE); } catch {}
-  console.log(`Caddy stopped (pid ${pid}).`);
-}
-
 async function start() {
-  const pid = readPid();
-  if (pid && isRunning(pid)) {
-    console.log(`Already running (pid ${pid}).`);
-    return;
+  const cdpPort = await chrome.start();
+  if (cdpPort) {
+    caddy.start(PROXY_PORT, cdpPort);
   }
-
-  fs.mkdirSync(USER_DATA_DIR, { recursive: true });
-
-  const cdpPort = await getRandomPort();
-
-  const child = spawn(CHROME, buildChromeArgs(cdpPort), {
-    detached: true,
-    stdio: 'ignore',
-  });
-  child.unref();
-
-  fs.writeFileSync(PID_FILE, String(child.pid));
-  console.log(`Started (pid ${child.pid}).`);
-
-  startCaddy(cdpPort);
 }
 
 function stop() {
-  stopCaddy();
-
-  const pid = readPid();
-  if (!pid || !isRunning(pid)) {
-    console.log('Not running.');
-    try { fs.unlinkSync(PID_FILE); } catch {}
-    return;
-  }
-
-  process.kill(pid, 'SIGTERM');
-  try { fs.unlinkSync(PID_FILE); } catch {}
-  console.log(`Stopped (pid ${pid}).`);
+  caddy.stop();
+  chrome.stop();
 }
 
 function status() {
-  const pid = readPid();
-  if (!pid || !isRunning(pid)) {
+  const pid = chrome.status();
+  if (!pid) {
     console.log('Not running.');
     return;
   }
 
-  const req = http.get(`http://localhost:${PROXY_PORT}/json/version`, (res) => {
+  const req = http.get(`http://cdp.test:${PROXY_PORT}/json/version`, (res) => {
     let data = '';
     res.on('data', (chunk) => data += chunk);
     res.on('end', () => {
