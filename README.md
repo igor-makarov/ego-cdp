@@ -4,7 +4,7 @@ A CLI tool to launch and manage a Chrome instance with [Chrome DevTools Protocol
 
 Designed for use inside sandboxed AI coding agents — the proxy lets CDP traffic flow through an allowed domain (`cdp.test`) without breaking out of the sandbox for every command.
 
-Main design philosophy: don't abstract over CDP, let the agent cook.
+Main design philosophy: don't abstract over CDP, let the agent cook. Achieved in ~350 LOC JS and a SKILL.md.
 
 ## Prerequisites
 
