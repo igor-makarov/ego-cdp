@@ -1,0 +1,11 @@
+{
+  "network": {
+    "allowedDomains": [
+      "cdp.test"
+    ]
+  },
+  "unsandboxedCommands": [
+    "ego-cdp start",
+    "ego-cdp stop"
+  ]
+}

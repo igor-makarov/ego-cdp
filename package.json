@@ -5,5 +5,8 @@
   "bin": {
     "ego-cdp": "bin/ego-cdp"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "undici": "^7.22.0"
+  }
 }

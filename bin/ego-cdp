@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
+const { EnvHttpProxyAgent, setGlobalDispatcher } = require('undici');
 const path = require('path');
-const http = require('http');
 const chrome = require('../lib/launch/chrome');
 const caddy = require('../lib/launch/caddy');
+
+setGlobalDispatcher(new EnvHttpProxyAgent());
 
 const PROXY_PORT = parseInt(process.env.PORT, 10) || 9222;
 
@@ -19,32 +21,27 @@ function stop() {
   chrome.stop();
 }
 
-function status() {
-  const pid = chrome.status();
-  if (!pid) {
-    console.log('Not running.');
-    return;
+async function status() {
+  const chromePid = chrome.getPid();
+  const caddyPid = caddy.getPid();
+
+  if (!chromePid) {
+    console.log('Chrome: not running.');
+  } else {
+    try {
+      const res = await fetch(`http://cdp.test:${PROXY_PORT}/json/version`, { signal: AbortSignal.timeout(2000) });
+      const info = await res.json();
+      console.log(`Chrome: running (pid ${chromePid}) — ${info.Browser}`);
+    } catch {
+      console.log(`Chrome: running (pid ${chromePid}) — CDP not responding yet.`);
+    }
   }
 
-  const req = http.get(`http://cdp.test:${PROXY_PORT}/json/version`, (res) => {
-    let data = '';
-    res.on('data', (chunk) => data += chunk);
-    res.on('end', () => {
-      try {
-        const info = JSON.parse(data);
-        console.log(`Running (pid ${pid}) — ${info.Browser}`);
-      } catch {
-        console.log(`Running (pid ${pid}) — CDP not responding yet.`);
-      }
-    });
-  });
-  req.on('error', () => {
-    console.log(`Running (pid ${pid}) — CDP not responding yet.`);
-  });
-  req.setTimeout(2000, () => {
-    req.destroy();
-    console.log(`Running (pid ${pid}) — CDP timed out.`);
-  });
+  if (!caddyPid) {
+    console.log('Caddy: not running.');
+  } else {
+    console.log(`Caddy: running (pid ${caddyPid}, proxy port ${PROXY_PORT}).`);
+  }
 }
 
 const command = process.argv[2];
