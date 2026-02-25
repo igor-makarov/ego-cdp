@@ -63,8 +63,8 @@ async function http() {
   const { values, positionals } = parseArgs({
     args: process.argv.slice(3),
     options: {
-      method: { type: 'string', short: 'm', default: 'GET' },
-      output: { type: 'string', short: 'o' },
+      method: { type: 'string', default: 'GET' },
+      output: { type: 'string' },
     },
     allowPositionals: true,
   });
@@ -89,8 +89,8 @@ async function ws() {
   const { values, positionals } = parseArgs({
     args: process.argv.slice(3),
     options: {
-      timeout: { type: 'string', short: 't', default: '60000' },
-      output: { type: 'string', short: 'o' },
+      timeout: { type: 'string', default: '60000' },
+      output: { type: 'string' },
     },
     allowPositionals: true,
   });
