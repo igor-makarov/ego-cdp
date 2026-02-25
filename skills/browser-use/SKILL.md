@@ -5,16 +5,28 @@ description: Use Chrome CDP via ego-cdp for tab listing, navigation, JS evaluati
 
 # Browser Use
 
+## Overview
+
+`ego-cdp` is a CLI that allows using a browser via CDP from within a sandboxed environment. It does so by creating a Caddy reverse-proxy and allowing a specific domain. This means that most operations do not require breaking out of the sandbox:
+
+| Subcommand | Runs in sandbox? | Reason                                                                  |
+| ---------- | ---------------- | ----------------------------------------------------------------------- |
+| `status`   | ✅ Yes           | Routes through Caddy on allowed domain                                  |
+| `start`    | ❌ No            | Launches Chrome & Caddy; needs to run unsandboxed (`bin/ego-cdp start`) |
+| `stop`     | ❌ No            | Kills Chrome & Caddy; needs to run unsandboxed (`bin/ego-cdp stop`)     |
+| `http`     | ✅ Yes           | Routes through Caddy on allowed domain                                  |
+| `ws`       | ✅ Yes           | Routes through Caddy on allowed domain                                  |
+
 ## Lifecycle
 
-- `../../bin/ego-cdp status` - check if Chrome and Caddy are running - allowed by sandbox
+- `../../bin/ego-cdp status` - check if Chrome and Caddy are running - allowed by sandbox, no escalation needed
 - `../../bin/ego-cdp start` - start Chrome and Caddy reverse proxy (detects partial state and restarts if needed) - needs sandbox escalation
 - `../../bin/ego-cdp stop` - stop both Chrome and Caddy - needs sandbox escalation
 
-## CDP Direct Access - allowed by sandbox
+## CDP Direct Access - allowed by sandbox, no escalation
 
-Use `../../bin/ego-cdp http <path> [--method=METHOD] [--output=FILE]` for HTTP endpoints (default GET):
-Use `../../bin/ego-cdp ws <path> '<message>' [--timeout=ms] [--output=FILE]` for WebSocket commands (default timeout 60000).
+Use `../../bin/ego-cdp http <path> [--method=METHOD] [--output=FILE]` for HTTP endpoints (default GET) - allowed by sandbox, no escalation needed
+Use `../../bin/ego-cdp ws <path> '<message>' [--timeout=ms] [--output=FILE]` for WebSocket commands (default timeout 60000) - allowed by sandbox, no escalation needed
 
 ### Browser-level examples (non-exhaustive)
 
