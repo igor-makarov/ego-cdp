@@ -2,7 +2,7 @@
 
 A CLI tool to launch and manage a Chrome instance with [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) (CDP) access, fronted by a [Caddy](https://caddyserver.com) reverse proxy.
 
-Designed for use inside sandboxed AI coding agents — the proxy lets CDP traffic flow through an allowed domain (`cdp.test`) without breaking out of the sandbox for every command.
+Designed for use inside sandboxed AI coding agents — the proxy lets CDP traffic flow through an allowed domain (`ego-cdp.localhost`) without breaking out of the sandbox for every command.
 
 Main design philosophy: don't abstract over CDP, let the agent cook. Achieved in ~350 LOC JS and a SKILL.md.
 
@@ -11,8 +11,6 @@ Main design philosophy: don't abstract over CDP, let the agent cook. Achieved in
 - macOS with Google Chrome installed
 - [Caddy](https://caddyserver.com) on `PATH`
 - Node.js ≥ 22
-- `cdp.test` in `/etc/hosts` pointing to `127.0.0.1`
-
 ## Install
 
 ```bash
@@ -34,7 +32,7 @@ ego-cdp status
 ego-cdp stop
 ```
 
-`start` picks a random port for CDP, launches Chrome with a dedicated profile (`~/.chrome/Ego`), and starts Caddy to proxy `cdp.test:<PORT>` → `localhost:<CDP_PORT>`.
+`start` picks a random port for CDP, launches Chrome with a dedicated profile (`~/.chrome/Ego`), and starts Caddy to proxy `ego-cdp.localhost:<PORT>` → `localhost:<CDP_PORT>`.
 
 ### HTTP commands
 
@@ -82,15 +80,13 @@ Chrome user data and runtime files (PID files, Caddy config) are stored in `~/.c
 
 ## Architecture
 
-```
-┌────────────────┐  HTTP/WS   ┌────────────────┐  HTTP/WS   ┌────────────────┐
-│                │  :9222     │                │  :random   │                │
-│  ego-cdp CLI   │ ─────────▶ │     Caddy      │ ─────────▶ │     Chrome     │
-│                │            │   cdp.test     │            │   CDP server   │
-└────────────────┘            └────────────────┘            └────────────────┘
+```mermaid
+graph LR
+    A[ego-cdp CLI] -- "HTTP/WS :9222" --> B["Caddy<br/>ego-cdp.localhost"]
+    B -- "HTTP/WS :random" --> C["Chrome<br/>CDP server"]
 ```
 
-The indirection through Caddy exists so that sandbox network policies can allowlist a single domain (`cdp.test`) rather than requiring unrestricted `localhost` access.
+The indirection through Caddy exists so that sandbox network policies can allowlist a single domain (`ego-cdp.localhost`) rather than requiring unrestricted `localhost` access. The `.localhost` TLD resolves to `127.0.0.1` automatically (RFC 6761). Traffic is routed through the sandbox's HTTP proxy with `noProxy` disabled (see `lib/common/network.js`) to prevent clients from bypassing the proxy for `.localhost` domains.
 
 ## pi Integration
 
