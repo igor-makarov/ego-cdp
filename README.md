@@ -4,7 +4,7 @@ A CLI tool to launch and manage a Chrome instance with [Chrome DevTools Protocol
 
 Designed for use inside sandboxed AI coding agents — the proxy lets CDP traffic flow through an allowed domain (`ego-cdp.localhost`) without breaking out of the sandbox for every command.
 
-Main design philosophy: don't abstract over CDP, let the agent cook. Achieved in ~350 LOC JS and a SKILL.md.
+Main design philosophy: don't abstract over CDP, let the agent cook. Achieved in ~390 LOC JS and a SKILL.md.
 
 ## Prerequisites
 
@@ -72,9 +72,10 @@ ego-cdp ws /devtools/page/<id> '{"id":1,"method":"Runtime.evaluate","params":{"e
 
 ## Configuration
 
-| Variable | Default | Description             |
-| -------- | ------- | ----------------------- |
-| `PORT`   | `9222`  | Caddy proxy listen port |
+| Variable | Default             | Description                                    |
+| -------- | ------------------- | ---------------------------------------------- |
+| `HOST`   | `ego-cdp.localhost` | Caddy proxy hostname (must be `*.localhost`)   |
+| `PORT`   | `9222`              | Caddy proxy listen port                        |
 
 Chrome user data and runtime files (PID files, Caddy config) are stored in `~/.chrome`.
 
