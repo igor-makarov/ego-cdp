@@ -7,6 +7,14 @@ export PATH="$ROOT_DIR/node_modules/.bin:$PATH"
 readonly TEST_HOST='ego-cdp-testing.localhost'
 readonly TEST_PORT=9223
 
+SELECTED_TEST=""
+if [ "$#" -gt 1 ]; then
+  printf 'Usage: %s [test-name]\n' "$0" >&2
+  exit 1
+elif [ "$#" -eq 1 ]; then
+  SELECTED_TEST="$1"
+fi
+
 TOTAL_TESTS=0
 FAILURES=0
 declare -a TEST_RESULTS=()
@@ -14,6 +22,10 @@ declare -a TEST_RESULTS=()
 printf 'Running tests from %s\n' "$SCRIPT_DIR"
 for dir in "$SCRIPT_DIR"/*/; do
   [ -d "$dir" ] || continue
+  TEST_NAME="$(basename "$dir")"
+  if [ -n "$SELECTED_TEST" ] && [ "$TEST_NAME" != "$SELECTED_TEST" ]; then
+    continue
+  fi
   CONFIG="$dir/srt-settings.json"
   COMMAND_NAME=""
   EXPECT_FAILURE=0
@@ -23,14 +35,13 @@ for dir in "$SCRIPT_DIR"/*/; do
   elif [ -f "$dir/command.sh" ]; then
     COMMAND_NAME="command.sh"
   else
-    printf 'No command script found in %s\n' "$(basename "$dir")" >&2
+    printf 'No command script found in %s\n' "$TEST_NAME" >&2
     exit 1
   fi
   TOTAL_TESTS=$((TOTAL_TESTS + 1))
   if [ ! -f "$CONFIG" ]; then
     printf '%s\n' '{}' > "$CONFIG"
   fi
-  TEST_NAME="$(basename "$dir")"
   printf '\n=== Running test: %s ===\n' "$TEST_NAME"
   printf 'Using settings: %s\n' "$CONFIG"
   TEST_USER_DATA_DIR=$(mktemp -d)
@@ -68,6 +79,11 @@ for dir in "$SCRIPT_DIR"/*/; do
   fi
   TEST_RESULTS+=("$SYMBOL $TEST_NAME")
 done
+
+if [ "$TOTAL_TESTS" -eq 0 ] && [ -n "$SELECTED_TEST" ]; then
+  printf '\nNo test named %s found\n' "$SELECTED_TEST" >&2
+  exit 1
+fi
 
 printf '\nTest results:\n'
 for result in "${TEST_RESULTS[@]}"; do

@@ -5,7 +5,7 @@
     ]
   },
   "unsandboxedCommands": [
-    "test/run.sh",
+    "test/run.sh *",
     "bin/ego-cdp start",
     "bin/ego-cdp stop"
   ]
