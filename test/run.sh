@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ROOT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 export PATH="$ROOT_DIR/node_modules/.bin:$PATH"
+readonly TEST_HOST='ego-cdp-testing.localhost'
+readonly TEST_PORT=9223
 
 TOTAL_TESTS=0
 FAILURES=0
@@ -29,6 +31,13 @@ for dir in "$SCRIPT_DIR"/*/; do
   fi
   printf '\n=== Running test: %s ===\n' "$(basename "$dir")"
   printf 'Using settings: %s\n' "$CONFIG"
+  TEST_USER_DATA_DIR=$(mktemp -d)
+  export HOST="$TEST_HOST"
+  export PORT="$TEST_PORT"
+  export USER_DATA_DIR="$TEST_USER_DATA_DIR"
+  printf 'Starting ego-cdp headless (host=%s port=%s) using %s\n' "$HOST" "$PORT" "$USER_DATA_DIR"
+  "$ROOT_DIR/bin/ego-cdp" start --headless
+
   set +e
   (
     cd "$dir"
@@ -36,6 +45,9 @@ for dir in "$SCRIPT_DIR"/*/; do
   )
   STATUS=$?
   set -e
+
+  "$ROOT_DIR/bin/ego-cdp" stop
+  unset USER_DATA_DIR HOST PORT
   if [ "$EXPECT_FAILURE" -eq 1 ]; then
     if [ "$STATUS" -eq 0 ]; then
       printf 'Expected %s to fail but it succeeded\n' "$COMMAND_NAME" >&2
