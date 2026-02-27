@@ -50,6 +50,7 @@ for dir in "$SCRIPT_DIR"/*/; do
   export USER_DATA_DIR="$TEST_USER_DATA_DIR"
   printf 'Starting ego-cdp headless (host=%s port=%s) using %s\n' "$HOST" "$PORT" "$USER_DATA_DIR"
   "$ROOT_DIR/bin/ego-cdp" start --headless
+  sleep 1
 
   set +e
   (
