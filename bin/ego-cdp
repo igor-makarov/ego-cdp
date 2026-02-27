@@ -13,7 +13,7 @@ import { runWsCommand } from '../lib/cdp/ws.js';
 
 setupProxy();
 
-async function start() {
+async function start({ headless = false } = {}) {
   const chromePid = chrome.getPid();
   const caddyPid = caddy.getPid();
   const chromeAlive = chromePid && isRunning(chromePid);
@@ -29,7 +29,7 @@ async function start() {
     stop();
   }
 
-  const cdpPort = await chrome.start();
+  const cdpPort = await chrome.start({ headless });
   if (cdpPort) {
     caddy.start(getProxyPort(), cdpPort);
   }
@@ -121,7 +121,17 @@ async function ws() {
 
 const command = process.argv[2];
 switch (command) {
-  case 'start':  start();  break;
+  case 'start': {
+    const { values } = parseArgs({
+      args: process.argv.slice(3),
+      options: {
+        headless: { type: 'boolean', default: false },
+      },
+      allowPositionals: false,
+    });
+    start({ headless: values.headless });
+    break;
+  }
   case 'stop':   stop();   break;
   case 'status': status(); break;
   case 'http':   http();   break;
