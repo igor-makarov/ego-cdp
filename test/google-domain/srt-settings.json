@@ -1,0 +1,11 @@
+{
+  "network": {
+    "allowedDomains": ["google.com", "www.google.com"],
+    "deniedDomains": []
+  },
+  "filesystem": {
+    "allowWrite": ["."],
+    "denyWrite": [],
+    "denyRead": []
+  }
+}

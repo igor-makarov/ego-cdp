@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Launch and manage Chrome with CDP (Chrome DevTools Protocol)",
-  "keywords": ["pi-package"],
+  "keywords": [
+    "pi-package"
+  ],
   "bin": {
     "ego-cdp": "bin/ego-cdp"
   },
@@ -11,7 +13,12 @@
   "dependencies": {
     "undici": "^7.22.0"
   },
+  "devDependencies": {
+    "@anthropic-ai/sandbox-runtime": "^0.0.39"
+  },
   "pi": {
-    "skills": ["./skills"]
+    "skills": [
+      "./skills"
+    ]
   }
 }
