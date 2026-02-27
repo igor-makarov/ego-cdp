@@ -9,6 +9,7 @@ readonly TEST_PORT=9223
 
 TOTAL_TESTS=0
 FAILURES=0
+declare -a TEST_RESULTS=()
 
 printf 'Running tests from %s\n' "$SCRIPT_DIR"
 for dir in "$SCRIPT_DIR"/*/; do
@@ -29,7 +30,8 @@ for dir in "$SCRIPT_DIR"/*/; do
   if [ ! -f "$CONFIG" ]; then
     printf '%s\n' '{}' > "$CONFIG"
   fi
-  printf '\n=== Running test: %s ===\n' "$(basename "$dir")"
+  TEST_NAME="$(basename "$dir")"
+  printf '\n=== Running test: %s ===\n' "$TEST_NAME"
   printf 'Using settings: %s\n' "$CONFIG"
   TEST_USER_DATA_DIR=$(mktemp -d)
   export HOST="$TEST_HOST"
@@ -48,10 +50,12 @@ for dir in "$SCRIPT_DIR"/*/; do
 
   "$ROOT_DIR/bin/ego-cdp" stop
   unset USER_DATA_DIR HOST PORT
+  SYMBOL='✓'
   if [ "$EXPECT_FAILURE" -eq 1 ]; then
     if [ "$STATUS" -eq 0 ]; then
       printf 'Expected %s to fail but it succeeded\n' "$COMMAND_NAME" >&2
       FAILURES=$((FAILURES + 1))
+      SYMBOL='✗'
     else
       printf 'Command %s failed as expected\n' "$COMMAND_NAME"
     fi
@@ -59,8 +63,15 @@ for dir in "$SCRIPT_DIR"/*/; do
     if [ "$STATUS" -ne 0 ]; then
       printf 'Command %s failed unexpectedly\n' "$COMMAND_NAME" >&2
       FAILURES=$((FAILURES + 1))
+      SYMBOL='✗'
     fi
   fi
+  TEST_RESULTS+=("$SYMBOL $TEST_NAME")
+done
+
+printf '\nTest results:\n'
+for result in "${TEST_RESULTS[@]}"; do
+  printf ' %s\n' "$result"
 done
 
 PASSED=$((TOTAL_TESTS - FAILURES))
