@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-printf 'checking ego-cdp json/version endpoint\n'
-curl -f -v --noproxy '' http://ego-cdp-testing.localhost:9223/json/version >/dev/null
+SOCK_PATH="${USER_DATA_DIR}/ego-cdp.sock"
+
+printf 'checking ego-cdp json/version endpoint via unix socket (%s)\n' "$SOCK_PATH"
+curl -f -v --unix-socket "$SOCK_PATH" "http://localhost/json/version" >/dev/null
 printf 'ego-cdp endpoint reachable\n'

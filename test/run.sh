@@ -3,9 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ROOT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+export ROOT_DIR
 export PATH="$ROOT_DIR/node_modules/.bin:$PATH"
-readonly TEST_HOST='ego-cdp-testing.localhost'
-readonly TEST_PORT=9223
 
 SELECTED_TEST=""
 if [ "$#" -gt 1 ]; then
@@ -43,25 +42,29 @@ for dir in "$SCRIPT_DIR"/*/; do
     printf '%s\n' '{}' > "$CONFIG"
   fi
   printf '\n=== Running test: %s ===\n' "$TEST_NAME"
-  printf 'Using settings: %s\n' "$CONFIG"
   TEST_USER_DATA_DIR=$(mktemp -d)
-  export HOST="$TEST_HOST"
-  export PORT="$TEST_PORT"
+  TEST_CONFIG="$TEST_USER_DATA_DIR/srt-settings.json"
+  TEST_COMMAND="$TEST_USER_DATA_DIR/command.sh"
+  cp "$CONFIG" "$TEST_CONFIG"
+  cp "$dir/$COMMAND_NAME" "$TEST_COMMAND"
+  chmod +x "$TEST_COMMAND"
+  printf 'Using settings: %s\n' "$TEST_CONFIG"
+
   export USER_DATA_DIR="$TEST_USER_DATA_DIR"
-  printf 'Starting ego-cdp headless (host=%s port=%s) using %s\n' "$HOST" "$PORT" "$USER_DATA_DIR"
+  printf 'Starting ego-cdp headless using %s\n' "$USER_DATA_DIR"
   "$ROOT_DIR/bin/ego-cdp" start --headless
   sleep 1
 
   set +e
   (
-    cd "$dir"
-    srt --settings "$CONFIG" bash "./$COMMAND_NAME"
+    cd "$TEST_USER_DATA_DIR"
+    srt --settings "$TEST_CONFIG" bash "./command.sh"
   )
   STATUS=$?
   set -e
 
   "$ROOT_DIR/bin/ego-cdp" stop
-  unset USER_DATA_DIR HOST PORT
+  unset USER_DATA_DIR
   SYMBOL='✓'
   if [ "$EXPECT_FAILURE" -eq 1 ]; then
     if [ "$STATUS" -eq 0 ]; then

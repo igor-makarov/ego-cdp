@@ -1,7 +1,8 @@
 {
   "network": {
-    "allowedDomains": ["ego-cdp-testing.localhost"],
-    "deniedDomains": []
+    "allowedDomains": [],
+    "deniedDomains": [],
+    "allowUnixSockets": ["./ego-cdp.sock"]
   },
   "filesystem": {
     "allowWrite": ["."],

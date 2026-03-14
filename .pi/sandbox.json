@@ -1,7 +1,7 @@
 {
   "network": {
-    "allowedDomains": [
-      "ego-cdp.localhost"
+    "allowUnixSockets": [
+      "~/.chrome/ego-cdp.sock"
     ]
   },
   "unsandboxedCommands": [

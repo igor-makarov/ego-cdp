@@ -7,7 +7,7 @@ import { parseArgs } from 'util';
 import * as chrome from '../lib/launch/chrome.js';
 import * as caddy from '../lib/launch/caddy.js';
 import { isRunning } from '../lib/common/pid.js';
-import { getProxyPort } from '../lib/common/config.js';
+import { getProxySocketPath } from '../lib/common/config.js';
 import { runHttpCommand } from '../lib/cdp/http.js';
 import { runWsCommand } from '../lib/cdp/ws.js';
 
@@ -31,7 +31,7 @@ async function start({ headless = false } = {}) {
 
   const cdpPort = await chrome.start({ headless });
   if (cdpPort) {
-    caddy.start(getProxyPort(), cdpPort);
+    caddy.start(cdpPort);
   }
 }
 
@@ -59,7 +59,7 @@ async function status() {
   if (!caddyPid) {
     console.log('Caddy: no pid');
   } else {
-    console.log(`Caddy: pid ${caddyPid}, proxy port ${getProxyPort()}`);
+    console.log(`Caddy: pid ${caddyPid}, proxy socket ${getProxySocketPath()}`);
   }
 }
 

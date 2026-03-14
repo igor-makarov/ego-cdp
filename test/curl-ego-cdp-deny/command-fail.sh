@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-printf 'curl ego-cdp (domain blocked)\n'
-curl -f -v --noproxy '' http://ego-cdp-testing.localhost:9223/json/version > /dev/null
+SOCK_PATH="${USER_DATA_DIR}/ego-cdp.sock"
+
+printf 'curl ego-cdp via unix socket (socket path blocked)\n'
+curl -f -v --unix-socket "$SOCK_PATH" "http://localhost/json/version" > /dev/null

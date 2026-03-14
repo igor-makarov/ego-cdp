@@ -1,7 +1,8 @@
 {
   "network": {
     "allowedDomains": [],
-    "deniedDomains": []
+    "deniedDomains": [],
+    "allowUnixSockets": []
   },
   "filesystem": {
     "allowWrite": ["."],
