@@ -87,7 +87,7 @@ graph LR
     B -- "HTTP/WS :random" --> C["Chrome<br/>CDP server"]
 ```
 
-The indirection through Caddy exists so that sandbox network policies can allowlist a single domain (`ego-cdp.localhost`) rather than requiring unrestricted `localhost` access. The `.localhost` TLD resolves to `127.0.0.1` automatically (RFC 6761). Traffic is routed through the sandbox's HTTP proxy with `noProxy` disabled (see `lib/common/network.js`) to prevent clients from bypassing the proxy for `.localhost` domains.
+The indirection through Caddy exists so that sandbox network policies can allowlist a single domain (`ego-cdp.localhost`) rather than requiring unrestricted `localhost` access. The `.localhost` TLD resolves to `127.0.0.1` automatically (RFC 6761).
 
 ## pi Integration
 

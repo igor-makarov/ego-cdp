@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { setupProxy } from '../lib/common/network.js';
 import fs from 'fs';
 import path from 'path';
 import { parseArgs } from 'util';
@@ -10,8 +9,6 @@ import { isRunning } from '../lib/common/pid.js';
 import { getProxySocketPath } from '../lib/common/config.js';
 import { runHttpCommand } from '../lib/cdp/http.js';
 import { runWsCommand } from '../lib/cdp/ws.js';
-
-setupProxy();
 
 async function start({ headless = false } = {}) {
   const chromePid = chrome.getPid();
