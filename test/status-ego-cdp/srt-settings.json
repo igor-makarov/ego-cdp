@@ -1,0 +1,12 @@
+{
+  "network": {
+    "allowedDomains": [],
+    "deniedDomains": [],
+    "allowUnixSockets": ["./ego-cdp.sock"]
+  },
+  "filesystem": {
+    "allowWrite": ["."],
+    "denyWrite": [],
+    "denyRead": []
+  }
+}

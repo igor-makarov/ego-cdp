@@ -11,7 +11,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "undici": "^7.22.0"
+    "undici": "^7.22.0",
+    "wait-on": "^9.0.4"
   },
   "devDependencies": {
     "@anthropic-ai/sandbox-runtime": "^0.0.39"

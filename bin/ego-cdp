@@ -26,9 +26,9 @@ async function start({ headless = false } = {}) {
     stop();
   }
 
-  const cdpPort = await chrome.start({ headless });
-  if (cdpPort) {
-    caddy.start(cdpPort);
+  const cdpInfo = await chrome.start({ headless });
+  if (cdpInfo) {
+    caddy.start(cdpInfo);
   }
 }
 
@@ -45,9 +45,14 @@ async function status() {
     console.log('Chrome: no pid');
   } else {
     try {
-      const info = JSON.parse(await runHttpCommand({ path: '/json/version' }));
-      const guid = info.webSocketDebuggerUrl?.split('/').pop() ?? 'unknown';
-      console.log(`Chrome: pid ${chromePid} — ${info.Browser} — browser guid ${guid}`);
+      const response = await runWsCommand({
+        path: '/devtools/browser',
+        message: '{"id":1,"method":"Browser.getVersion"}',
+        timeout: 5000,
+      });
+      const info = JSON.parse(response);
+      const product = info.result?.product ?? 'unknown';
+      console.log(`Chrome: pid ${chromePid} — ${product}`);
     } catch {
       console.log(`Chrome: pid ${chromePid} — CDP not responding`);
     }
