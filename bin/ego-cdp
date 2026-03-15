@@ -4,52 +4,46 @@ import fs from 'fs';
 import path from 'path';
 import { parseArgs } from 'util';
 import * as chrome from '../lib/launch/chrome.js';
-import * as caddy from '../lib/launch/caddy.js';
 import * as wsDaemon from '../lib/launch/ws-daemon.js';
 import { isRunning } from '../lib/common/pid.js';
-import { getProxySocketPath, getWsDaemonSocketPath } from '../lib/common/config.js';
-import { runHttpCommand } from '../lib/cdp/http.js';
+import { getWsDaemonSocketPath } from '../lib/common/config.js';
 import { runWsCommand } from '../lib/cdp/ws.js';
 
 async function start({ headless = false } = {}) {
   const chromePid = chrome.getPid();
-  const caddyPid = caddy.getPid();
+  const daemonPid = wsDaemon.getPid();
   const chromeAlive = chromePid && isRunning(chromePid);
-  const caddyAlive = caddyPid && isRunning(caddyPid);
+  const daemonAlive = daemonPid && isRunning(daemonPid);
 
-  if (chromeAlive && caddyAlive) {
-    console.log(`Already running (chrome ${chromePid}, caddy ${caddyPid}).`);
+  if (chromeAlive && daemonAlive) {
+    console.log(`Already running (chrome ${chromePid}, daemon ${daemonPid}).`);
     return;
   }
 
-  if (chromeAlive !== caddyAlive) {
+  if (chromeAlive !== daemonAlive) {
     console.log('Partial state detected, restarting...');
     stop();
   }
 
   const cdpInfo = await chrome.start({ headless });
   if (cdpInfo) {
-    caddy.start(cdpInfo);
-    await wsDaemon.start();
+    await wsDaemon.start(cdpInfo);
   }
 }
 
 function stop() {
   wsDaemon.stop();
-  caddy.stop();
   chrome.stop();
 }
 
 async function status() {
   const chromePid = chrome.getPid();
-  const caddyPid = caddy.getPid();
 
   if (!chromePid) {
     console.log('Chrome: no pid');
   } else {
     try {
       const response = await runWsCommand({
-        path: '/devtools/browser',
         message: '{"id":1,"method":"Browser.getVersion"}',
         timeout: 5000,
       });
@@ -61,12 +55,6 @@ async function status() {
     }
   }
 
-  if (!caddyPid) {
-    console.log('Caddy: no pid');
-  } else {
-    console.log(`Caddy: pid ${caddyPid}, proxy socket ${getProxySocketPath()}`);
-  }
-
   const daemonPid = wsDaemon.getPid();
   if (!daemonPid) {
     console.log('WS daemon: no pid');
@@ -74,32 +62,6 @@ async function status() {
     console.log(`WS daemon: pid ${daemonPid}, socket ${getWsDaemonSocketPath()}`);
   } else {
     console.log(`WS daemon: pid ${daemonPid} (not running)`);
-  }
-}
-
-async function http() {
-  const { values, positionals } = parseArgs({
-    args: process.argv.slice(3),
-    options: {
-      method: { type: 'string', default: 'GET' },
-      output: { type: 'string' },
-    },
-    allowPositionals: true,
-  });
-
-  const urlPath = positionals[0];
-  if (!urlPath) {
-    console.error('Usage: ego-cdp http [--method=METHOD] [--output=FILE] <url-path>');
-    process.exit(1);
-  }
-
-  const result = await runHttpCommand({ method: values.method, path: urlPath });
-
-  if (values.output) {
-    fs.writeFileSync(values.output, result);
-    console.log(`Written to ${values.output}`);
-  } else {
-    process.stdout.write(result);
   }
 }
 
@@ -113,14 +75,13 @@ async function ws() {
     allowPositionals: true,
   });
 
-  const [path, message] = positionals;
-  if (!path || !message) {
-    console.error('Usage: ego-cdp ws <path> <message> [--timeout=ms] [--output=FILE]');
+  const message = positionals[0];
+  if (!message) {
+    console.error('Usage: ego-cdp ws <message> [--timeout=ms] [--output=FILE]');
     process.exit(1);
   }
 
   const result = await runWsCommand({
-    path,
     message,
     timeout: parseInt(values.timeout, 10),
   });
@@ -148,9 +109,8 @@ switch (command) {
   }
   case 'stop':   stop();   break;
   case 'status': status(); break;
-  case 'http':   http();   break;
   case 'ws':     ws();     break;
   default:
-    console.error(`Usage: ${path.basename(process.argv[1])} {start|stop|status|http|ws}`);
+    console.error(`Usage: ${path.basename(process.argv[1])} {start|stop|status|ws}`);
     process.exit(1);
 }

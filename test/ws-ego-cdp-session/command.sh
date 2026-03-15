@@ -4,7 +4,7 @@ set -euo pipefail
 printf 'testing multiple ws calls: create target, attach, evaluate via session\n'
 
 # 1. Create a new target (blank page)
-CREATE_RESPONSE="$("$ROOT_DIR/bin/ego-cdp" ws "/devtools/browser" '{"id":1,"method":"Target.createTarget","params":{"url":"about:blank"}}')"
+CREATE_RESPONSE="$("$ROOT_DIR/bin/ego-cdp" ws '{"id":1,"method":"Target.createTarget","params":{"url":"about:blank"}}')"
 TARGET_ID="$(printf '%s' "$CREATE_RESPONSE" | node -e "
   const input = require('node:fs').readFileSync(0,'utf8');
   const parsed = JSON.parse(input);
@@ -14,7 +14,7 @@ TARGET_ID="$(printf '%s' "$CREATE_RESPONSE" | node -e "
 printf 'created target: %s\n' "$TARGET_ID"
 
 # 2. Attach to the target to get a session id
-ATTACH_RESPONSE="$("$ROOT_DIR/bin/ego-cdp" ws "/devtools/browser" "{\"id\":2,\"method\":\"Target.attachToTarget\",\"params\":{\"targetId\":\"$TARGET_ID\",\"flatten\":true}}")"
+ATTACH_RESPONSE="$("$ROOT_DIR/bin/ego-cdp" ws "{\"id\":2,\"method\":\"Target.attachToTarget\",\"params\":{\"targetId\":\"$TARGET_ID\",\"flatten\":true}}")"
 SESSION_ID="$(printf '%s' "$ATTACH_RESPONSE" | node -e "
   const input = require('node:fs').readFileSync(0,'utf8');
   const parsed = JSON.parse(input);
@@ -24,7 +24,7 @@ SESSION_ID="$(printf '%s' "$ATTACH_RESPONSE" | node -e "
 printf 'attached session: %s\n' "$SESSION_ID"
 
 # 3. Use the session id to evaluate an expression on the page
-EVAL_RESPONSE="$("$ROOT_DIR/bin/ego-cdp" ws "/devtools/browser" "{\"id\":3,\"method\":\"Runtime.evaluate\",\"params\":{\"expression\":\"1+1\"},\"sessionId\":\"$SESSION_ID\"}")"
+EVAL_RESPONSE="$("$ROOT_DIR/bin/ego-cdp" ws "{\"id\":3,\"method\":\"Runtime.evaluate\",\"params\":{\"expression\":\"1+1\"},\"sessionId\":\"$SESSION_ID\"}")"
 EVAL_VALUE="$(printf '%s' "$EVAL_RESPONSE" | node -e "
   const input = require('node:fs').readFileSync(0,'utf8');
   const parsed = JSON.parse(input);
@@ -35,7 +35,7 @@ EVAL_VALUE="$(printf '%s' "$EVAL_RESPONSE" | node -e "
 printf 'evaluated 1+1 = %s\n' "$EVAL_VALUE"
 
 # 4. Clean up: close the target
-CLOSE_RESPONSE="$("$ROOT_DIR/bin/ego-cdp" ws "/devtools/browser" "{\"id\":4,\"method\":\"Target.closeTarget\",\"params\":{\"targetId\":\"$TARGET_ID\"}}")"
+CLOSE_RESPONSE="$("$ROOT_DIR/bin/ego-cdp" ws "{\"id\":4,\"method\":\"Target.closeTarget\",\"params\":{\"targetId\":\"$TARGET_ID\"}}")"
 printf '%s' "$CLOSE_RESPONSE" | node -e "
   const input = require('node:fs').readFileSync(0,'utf8');
   const parsed = JSON.parse(input);

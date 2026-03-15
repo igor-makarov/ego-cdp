@@ -1,8 +1,7 @@
 {
   "network": {
     "allowUnixSockets": [
-      "~/.chrome/ego-cdp.sock",
-      "~/.chrome/ego-cdp-ws-daemon.sock"
+      "~/.chrome/ego-cdp.sock"
     ]
   },
   "unsandboxedCommands": [

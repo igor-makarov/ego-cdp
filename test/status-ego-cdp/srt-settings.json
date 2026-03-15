@@ -2,7 +2,7 @@
   "network": {
     "allowedDomains": [],
     "deniedDomains": [],
-    "allowUnixSockets": ["./ego-cdp.sock", "./ego-cdp-ws-daemon.sock"]
+    "allowUnixSockets": ["./ego-cdp.sock"]
   },
   "filesystem": {
     "allowWrite": ["."],

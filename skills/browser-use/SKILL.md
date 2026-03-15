@@ -7,35 +7,36 @@ description: Use Chrome CDP via ego-cdp for tab listing, navigation, JS evaluati
 
 ## Overview
 
-`ego-cdp` is a CLI that allows using a browser via CDP from within a sandboxed environment. It does so by creating a Caddy reverse-proxy and exposing a Unix socket. This means that most operations do not require breaking out of the sandbox:
+`ego-cdp` is a CLI that allows using a browser via CDP from within a sandboxed environment. It runs a persistent WebSocket daemon that keeps a connection to Chrome's browser endpoint open between calls. All CDP commands go through a single Unix socket.
 
-| Subcommand | Runs in sandbox? | Reason                                                                  |
-| ---------- | ---------------- | ----------------------------------------------------------------------- |
-| `status`   | ✅ Yes           | Routes through Caddy on socket                                          |
-| `start`    | ❌ No            | Launches Chrome & Caddy; needs to run unsandboxed (`bin/ego-cdp start`) |
-| `stop`     | ❌ No            | Kills Chrome & Caddy; needs to run unsandboxed (`bin/ego-cdp stop`)     |
-| `http`     | ✅ Yes           | Routes through Caddy on socket                                          |
-| `ws`       | ✅ Yes           | Routes through Caddy on socket                                          |
+| Subcommand | Runs in sandbox? | Reason                                                                     |
+| ---------- | ---------------- | -------------------------------------------------------------------------- |
+| `status`   | ✅ Yes           | Routes through daemon on socket                                            |
+| `start`    | ❌ No            | Launches Chrome & WS daemon; needs to run unsandboxed (`bin/ego-cdp start`) |
+| `stop`     | ❌ No            | Kills Chrome & WS daemon; needs to run unsandboxed (`bin/ego-cdp stop`)     |
+| `ws`       | ✅ Yes           | Routes through daemon on socket                                            |
 
 ## Lifecycle
 
-- `../../bin/ego-cdp status` - check if Chrome and Caddy are running - allowed by sandbox, no escalation needed
-- `../../bin/ego-cdp start` - start Chrome and Caddy reverse proxy (detects partial state and restarts if needed) - needs sandbox escalation
-- `../../bin/ego-cdp stop` - stop both Chrome and Caddy - needs sandbox escalation
+- `../../bin/ego-cdp status` - check if Chrome and WS daemon are running - allowed by sandbox, no escalation needed
+- `../../bin/ego-cdp start` - start Chrome and WS daemon (detects partial state and restarts if needed) - needs sandbox escalation
+- `../../bin/ego-cdp stop` - stop Chrome and WS daemon - needs sandbox escalation
 
-## CDP Direct Access - allowed by sandbox, no escalation
+## CDP Access - allowed by sandbox, no escalation
 
-Use `../../bin/ego-cdp http <path> [--method=METHOD] [--output=FILE]` for HTTP endpoints (default GET) - allowed by sandbox, no escalation needed
-Use `../../bin/ego-cdp ws <path> '<message>' [--timeout=ms] [--output=FILE]` for WebSocket commands (default timeout 60000) - allowed by sandbox, no escalation needed
+All commands use the flattened session model on the browser endpoint. Use `sessionId` to target specific pages.
+
+`../../bin/ego-cdp ws '<message>' [--timeout=ms] [--output=FILE]` - allowed by sandbox, no escalation needed
 
 ### Examples (non-exhaustive)
 
-- `../../bin/ego-cdp http /json/version` - browser version (includes `webSocketDebuggerUrl` with browser GUID)
-- `../../bin/ego-cdp ws /devtools/browser '{"id":1,"method":"Target.getTargets"}'` - list all tabs
-- `../../bin/ego-cdp ws /devtools/browser '{"id":1,"method":"Target.createTarget","params":{"url":"<url>","background":true}}'` - create tab in background (no focus steal)
-- `../../bin/ego-cdp ws /devtools/browser '{"id":1,"method":"Target.closeTarget","params":{"targetId":"<id>"}}'` - close a tab
-- `../../bin/ego-cdp ws /devtools/browser '{"id":1,"method":"Target.attachToTarget","params":{"targetId":"<id>","flatten":true}}'` - attach to tab and get `sessionId`
-- `../../bin/ego-cdp ws /devtools/browser '{"id":2,"sessionId":"<sessionId>","method":"Page.navigate","params":{"url":"<url>"}}'` - send target-scoped command using `sessionId`
+- `../../bin/ego-cdp ws '{"id":1,"method":"Browser.getVersion"}'` - browser version
+- `../../bin/ego-cdp ws '{"id":1,"method":"Target.getTargets"}'` - list all tabs
+- `../../bin/ego-cdp ws '{"id":1,"method":"Target.createTarget","params":{"url":"<url>","background":true}}'` - create tab in background (no focus steal)
+- `../../bin/ego-cdp ws '{"id":1,"method":"Target.closeTarget","params":{"targetId":"<id>"}}'` - close a tab
+- `../../bin/ego-cdp ws '{"id":1,"method":"Target.attachToTarget","params":{"targetId":"<id>","flatten":true}}'` - attach to tab and get `sessionId`
+- `../../bin/ego-cdp ws '{"id":2,"sessionId":"<sessionId>","method":"Page.navigate","params":{"url":"<url>"}}'` - send target-scoped command using `sessionId`
+- `../../bin/ego-cdp ws '{"id":3,"sessionId":"<sessionId>","method":"Runtime.evaluate","params":{"expression":"document.title"}}'` - evaluate JS in a tab
 
 ## General instructions
 
