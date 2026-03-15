@@ -5,8 +5,9 @@ import path from 'path';
 import { parseArgs } from 'util';
 import * as chrome from '../lib/launch/chrome.js';
 import * as caddy from '../lib/launch/caddy.js';
+import * as wsDaemon from '../lib/launch/ws-daemon.js';
 import { isRunning } from '../lib/common/pid.js';
-import { getProxySocketPath } from '../lib/common/config.js';
+import { getProxySocketPath, getWsDaemonSocketPath } from '../lib/common/config.js';
 import { runHttpCommand } from '../lib/cdp/http.js';
 import { runWsCommand } from '../lib/cdp/ws.js';
 
@@ -29,10 +30,12 @@ async function start({ headless = false } = {}) {
   const cdpInfo = await chrome.start({ headless });
   if (cdpInfo) {
     caddy.start(cdpInfo);
+    await wsDaemon.start();
   }
 }
 
 function stop() {
+  wsDaemon.stop();
   caddy.stop();
   chrome.stop();
 }
@@ -62,6 +65,15 @@ async function status() {
     console.log('Caddy: no pid');
   } else {
     console.log(`Caddy: pid ${caddyPid}, proxy socket ${getProxySocketPath()}`);
+  }
+
+  const daemonPid = wsDaemon.getPid();
+  if (!daemonPid) {
+    console.log('WS daemon: no pid');
+  } else if (isRunning(daemonPid)) {
+    console.log(`WS daemon: pid ${daemonPid}, socket ${getWsDaemonSocketPath()}`);
+  } else {
+    console.log(`WS daemon: pid ${daemonPid} (not running)`);
   }
 }
 
