@@ -6,26 +6,29 @@ import { parseArgs } from 'util';
 import * as chrome from '../lib/launch/chrome.js';
 import * as wsDaemon from '../lib/launch/ws-daemon.js';
 import { isRunning } from '../lib/common/pid.js';
-import { getWsDaemonSocketPath } from '../lib/common/config.js';
+import { getUserDataDir, getWsDaemonSocketPath } from '../lib/common/config.js';
 import { runWsCommand } from '../lib/cdp/ws.js';
 
-async function start({ headless = false } = {}) {
+async function start({ headless = false, user = false } = {}) {
   const chromePid = chrome.getPid();
   const daemonPid = wsDaemon.getPid();
-  const chromeAlive = chromePid && isRunning(chromePid);
-  const daemonAlive = daemonPid && isRunning(daemonPid);
 
-  if (chromeAlive && daemonAlive) {
-    console.log(`Already running (chrome ${chromePid}, daemon ${daemonPid}).`);
-    return;
+  if (!user) {
+    const chromeAlive = chromePid && isRunning(chromePid);
+    const daemonAlive = daemonPid && isRunning(daemonPid);
+
+    if (chromeAlive && daemonAlive) {
+      console.log(`Already running (chrome ${chromePid}, daemon ${daemonPid}).`);
+      return;
+    }
+
+    if (chromeAlive !== daemonAlive) {
+      console.log('Partial state detected, restarting...');
+      stop();
+    }
   }
 
-  if (chromeAlive !== daemonAlive) {
-    console.log('Partial state detected, restarting...');
-    stop();
-  }
-
-  const cdpInfo = await chrome.start({ headless });
+  const cdpInfo = await chrome.start({ headless, user });
   if (cdpInfo) {
     await wsDaemon.start(cdpInfo);
   }
@@ -33,15 +36,35 @@ async function start({ headless = false } = {}) {
 
 function stop() {
   wsDaemon.stop();
-  chrome.stop();
+  const chromePid = chrome.getPid();
+  if (chromePid === 0) {
+    // User mode: Chrome was not launched by ego, just clean up pid file
+    console.log('Chrome: user mode, not stopping (not launched by ego).');
+    try { fs.unlinkSync(path.join(getUserDataDir(), 'cdp.pid')); } catch {}
+  } else {
+    chrome.stop();
+  }
 }
 
 async function status() {
   const chromePid = chrome.getPid();
 
-  if (!chromePid) {
+  if (chromePid === null) {
     console.log('Chrome: no pid');
+  } else if (chromePid === 0) {
+    console.log('Chrome: user mode (not launched by ego)');
   } else {
+    console.log(`Chrome: pid ${chromePid}`);
+  }
+
+  const daemonPid = wsDaemon.getPid();
+  if (daemonPid === null) {
+    console.log('WS daemon: no pid');
+  } else {
+    console.log(`WS daemon: pid ${daemonPid}, socket ${getWsDaemonSocketPath()}`);
+  }
+
+  if (daemonPid !== null && chromePid !== null) {
     try {
       const response = await runWsCommand({
         message: '{"id":1,"method":"Browser.getVersion"}',
@@ -49,19 +72,10 @@ async function status() {
       });
       const info = JSON.parse(response);
       const product = info.result?.product ?? 'unknown';
-      console.log(`Chrome: pid ${chromePid} — ${product}`);
+      console.log(`Browser: ${product}`);
     } catch {
-      console.log(`Chrome: pid ${chromePid} — CDP not responding`);
+      console.log('Browser: CDP not responding');
     }
-  }
-
-  const daemonPid = wsDaemon.getPid();
-  if (!daemonPid) {
-    console.log('WS daemon: no pid');
-  } else if (isRunning(daemonPid)) {
-    console.log(`WS daemon: pid ${daemonPid}, socket ${getWsDaemonSocketPath()}`);
-  } else {
-    console.log(`WS daemon: pid ${daemonPid} (not running)`);
   }
 }
 
@@ -101,10 +115,11 @@ switch (command) {
       args: process.argv.slice(3),
       options: {
         headless: { type: 'boolean', default: false },
+        user: { type: 'boolean', default: false },
       },
       allowPositionals: false,
     });
-    start({ headless: values.headless });
+    start({ headless: values.headless, user: values.user });
     break;
   }
   case 'stop':   stop();   break;
