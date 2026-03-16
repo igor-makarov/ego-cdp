@@ -51,6 +51,7 @@ for dir in "$SCRIPT_DIR"/*/; do
   printf 'Using settings: %s\n' "$TEST_CONFIG"
 
   export USER_DATA_DIR="$TEST_USER_DATA_DIR"
+  export PORT=$(( (RANDOM % 10000) + 20000 ))
   printf 'Starting ego-cdp headless using %s\n' "$USER_DATA_DIR"
   "$ROOT_DIR/bin/ego-cdp" start --headless
   sleep 1
@@ -64,7 +65,7 @@ for dir in "$SCRIPT_DIR"/*/; do
   set -e
 
   "$ROOT_DIR/bin/ego-cdp" stop
-  unset USER_DATA_DIR
+  unset USER_DATA_DIR PORT
   SYMBOL='✓'
   if [ "$EXPECT_FAILURE" -eq 1 ]; then
     if [ "$STATUS" -eq 0 ]; then
