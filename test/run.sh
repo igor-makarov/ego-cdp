@@ -80,7 +80,6 @@ for dir in "$SCRIPT_DIR"/*/; do
   export PORT=$(( (RANDOM % 10000) + 20000 ))
   printf 'Starting ego-cdp headless using %s\n' "$USER_DATA_DIR"
   "$ROOT_DIR/bin/ego-cdp" start --headless
-  sleep 1
 
   set +e
   (
