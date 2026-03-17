@@ -6,25 +6,51 @@ ROOT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 export ROOT_DIR
 export PATH="$ROOT_DIR/node_modules/.bin:$PATH"
 
-SELECTED_TEST=""
-if [ "$#" -gt 1 ]; then
-  printf 'Usage: %s [test-name]\n' "$0" >&2
-  exit 1
-elif [ "$#" -eq 1 ]; then
-  SELECTED_TEST="$1"
-fi
+SELECTED_TESTS=("$@")
+
+test_is_selected() {
+  local test_name="$1"
+  local selected_test
+
+  if [ "${#SELECTED_TESTS[@]}" -eq 0 ]; then
+    return 0
+  fi
+
+  for selected_test in "${SELECTED_TESTS[@]}"; do
+    if [ "$selected_test" = "$test_name" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+test_was_requested() {
+  local requested_test="$1"
+  local found_test
+
+  for found_test in "${FOUND_TESTS[@]}"; do
+    if [ "$found_test" = "$requested_test" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
 
 TOTAL_TESTS=0
 FAILURES=0
 declare -a TEST_RESULTS=()
+declare -a FOUND_TESTS=()
 
 printf 'Running tests from %s\n' "$SCRIPT_DIR"
 for dir in "$SCRIPT_DIR"/*/; do
   [ -d "$dir" ] || continue
   TEST_NAME="$(basename "$dir")"
-  if [ -n "$SELECTED_TEST" ] && [ "$TEST_NAME" != "$SELECTED_TEST" ]; then
+  if ! test_is_selected "$TEST_NAME"; then
     continue
   fi
+  FOUND_TESTS+=("$TEST_NAME")
   CONFIG="$dir/srt-settings.json"
   COMMAND_NAME=""
   EXPECT_FAILURE=0
@@ -85,9 +111,14 @@ for dir in "$SCRIPT_DIR"/*/; do
   TEST_RESULTS+=("$SYMBOL $TEST_NAME")
 done
 
-if [ "$TOTAL_TESTS" -eq 0 ] && [ -n "$SELECTED_TEST" ]; then
-  printf '\nNo test named %s found\n' "$SELECTED_TEST" >&2
-  exit 1
+MISSING_TESTS=0
+if [ "${#SELECTED_TESTS[@]}" -gt 0 ]; then
+  for selected_test in "${SELECTED_TESTS[@]}"; do
+    if ! test_was_requested "$selected_test"; then
+      printf '\nNo test named %s found\n' "$selected_test" >&2
+      MISSING_TESTS=1
+    fi
+  done
 fi
 
 printf '\nTest results:\n'
@@ -98,6 +129,6 @@ done
 PASSED=$((TOTAL_TESTS - FAILURES))
 printf '\nSummary: total %d passed %d failed %d\n' "$TOTAL_TESTS" "$PASSED" "$FAILURES"
 
-if [ "$FAILURES" -gt 0 ]; then
+if [ "$FAILURES" -gt 0 ] || [ "$MISSING_TESTS" -gt 0 ]; then
   exit 1
 fi

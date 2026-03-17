@@ -9,7 +9,8 @@
 - Run the orchestrator from the repository root:
 
 ```bash
-test/run.sh
+test/run.sh # all tests
+test/run.sh test-name1 test-name2 # specific tests
 ```
 
 - To update a test’s behavior, edit `test/<name>/command.sh` (the command) and adjust its `srt-settings.json` as needed. Make sure `network` and `filesystem` sections are present and specify explicit allows/denies as the sandbox requires.

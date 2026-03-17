@@ -13,11 +13,10 @@ wait
 
 # Verify each result has a valid product field
 for i in 1 2 3 4 5; do
-  node -e "
-    const fs = require('node:fs');
-    const parsed = JSON.parse(fs.readFileSync('result-$i.json', 'utf8'));
-    if (!parsed.result?.product) { console.error('result-$i.json: no product'); process.exit(1); }
-  "
+  jq -e '.result.product | startswith("Chrome/")' "result-$i.json" >/dev/null || {
+    printf 'result-%d.json: no Chrome product\n' "$i" >&2
+    exit 1
+  }
   printf 'result-%d: ok\n' "$i"
 done
 
