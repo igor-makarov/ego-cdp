@@ -6,12 +6,17 @@ import { parseArgs } from 'util';
 import * as chrome from '../lib/launch/chrome.js';
 import * as wsDaemon from '../lib/launch/ws-daemon.js';
 import { isRunning } from '../lib/common/pid.js';
-import { getUserDataDir, getWsDaemonSocketPath } from '../lib/common/config.js';
+import {
+  getChromeConfig,
+  getUserDataDir,
+  getWsDaemonSocketPath,
+} from '../lib/common/config.js';
 import { runWsCommand } from '../lib/cdp/ws.js';
 
-async function start({ headless = false, user = false } = {}) {
+async function start() {
   const chromePid = chrome.getPid();
   const daemonPid = wsDaemon.getPid();
+  const { user } = getChromeConfig();
 
   if (!user) {
     const chromeAlive = chromePid && isRunning(chromePid);
@@ -28,7 +33,7 @@ async function start({ headless = false, user = false } = {}) {
     }
   }
 
-  const cdpInfo = await chrome.start({ headless, user });
+  const cdpInfo = await chrome.start();
   if (cdpInfo) {
     await wsDaemon.start(cdpInfo);
   }
@@ -110,18 +115,7 @@ async function ws() {
 
 const command = process.argv[2];
 switch (command) {
-  case 'start': {
-    const { values } = parseArgs({
-      args: process.argv.slice(3),
-      options: {
-        headless: { type: 'boolean', default: false },
-        user: { type: 'boolean', default: false },
-      },
-      allowPositionals: false,
-    });
-    start({ headless: values.headless, user: values.user });
-    break;
-  }
+  case 'start':  start();  break;
   case 'stop':   stop();   break;
   case 'status': status(); break;
   case 'ws':     ws();     break;

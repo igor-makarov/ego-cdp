@@ -4,7 +4,7 @@ A CLI tool to launch and manage a Chrome instance with [Chrome DevTools Protocol
 
 Designed for use inside sandboxed AI coding agents — the proxy lets CDP traffic flow through an allowed domain (`ego-cdp.localhost`) without breaking out of the sandbox for every command.
 
-Main design philosophy: don't abstract over CDP, let the agent cook. Achieved in ~390 LOC JS and a SKILL.md.
+Main design philosophy: don't abstract over CDP, let the agent cook.
 
 ## Prerequisites
 
@@ -32,7 +32,7 @@ ego-cdp status
 ego-cdp stop
 ```
 
-`start` picks a random port for CDP, launches Chrome with a dedicated profile (`~/.chrome/Ego`), and starts Caddy to proxy `ego-cdp.localhost:<PORT>` → `localhost:<CDP_PORT>`.
+`start` reads `config.json` from the user data dir (default `~/.chrome/config.json`, overridable with `USER_DATA_DIR` for testing), launches Chrome with a dedicated profile (`~/.chrome/Ego`), and starts the websocket daemon.
 
 ### HTTP commands
 
@@ -72,12 +72,23 @@ ego-cdp ws /devtools/page/<id> '{"id":1,"method":"Runtime.evaluate","params":{"e
 
 ## Configuration
 
-| Variable | Default             | Description                                    |
-| -------- | ------------------- | ---------------------------------------------- |
-| `HOST`   | `ego-cdp.localhost` | Caddy proxy hostname (must be `*.localhost`)   |
-| `PORT`   | `9222`              | Caddy proxy listen port                        |
+Chrome user data and runtime files are stored in `~/.chrome` by default. For tests, you can override the base directory with `USER_DATA_DIR`.
 
-Chrome user data and runtime files (PID files, Caddy config) are stored in `~/.chrome`.
+`ego-cdp start` reads `userDataDir/config.json`:
+
+```json
+{
+  "headless": false,
+  "user": false,
+  "port": 9222
+}
+```
+
+Fields:
+
+- `headless`: launch Chrome headless
+- `user`: connect to the user's existing Chrome profile via `DevToolsActivePort`
+- `port`: remote debugging port for launched Chrome
 
 ## Architecture
 
