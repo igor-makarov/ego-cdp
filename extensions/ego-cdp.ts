@@ -54,10 +54,6 @@ function writeTextFile(filePath: string, text: string) {
 	fs.writeFileSync(filePath, text);
 }
 
-function truncate(text: string, max: number): string {
-	return text.length > max ? `${text.slice(0, max - 1)}…` : text;
-}
-
 function stringifyInline(value: unknown): string {
 	try {
 		return JSON.stringify(value);
@@ -86,10 +82,6 @@ function parseCdpMessage(message: string): {
 	} catch {
 		return { raw: message };
 	}
-}
-
-function shortId(value: string): string {
-	return value.length > 12 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value;
 }
 
 function getTruncationNotice(truncation: TruncationResult, fullOutputPath: string): string {
@@ -237,11 +229,11 @@ const egoCdpWsTool = defineTool({
 	renderCall(args, theme, _context) {
 		const cdp = parseCdpMessage(args.message);
 		let text = theme.fg("toolTitle", theme.bold("ego_cdp_ws "));
-		text += theme.fg("accent", cdp.method ?? truncate(cdp.raw, 72));
+		text += theme.fg("accent", cdp.method ?? cdp.raw);
 
 		const meta: string[] = [];
 		if (cdp.id) meta.push(`id=${cdp.id}`);
-		if (cdp.sessionId) meta.push(`session=${shortId(cdp.sessionId)}`);
+		if (cdp.sessionId) meta.push(`session=${cdp.sessionId}`);
 		if (args.timeout && args.timeout !== 60) meta.push(`timeout=${args.timeout}s`);
 		if (meta.length) text += " " + theme.fg("dim", `(${meta.join(", ")})`);
 
