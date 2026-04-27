@@ -7,14 +7,16 @@ description: Use Chrome CDP via ego-cdp for tab listing, navigation, JS evaluati
 
 ## Overview
 
-`ego-cdp` is a CLI that allows using a browser via CDP from within a sandboxed environment. It runs a persistent WebSocket daemon that keeps a connection to Chrome's browser endpoint open between calls. All CDP commands go through a single Unix socket.
+`ego-cdp` is a CLI plus a pi extension custom tool for using a browser via CDP from within a sandboxed environment. It runs a persistent WebSocket daemon that keeps a connection to Chrome's browser endpoint open between calls. All CDP commands go through a single Unix socket.
 
-| Subcommand | Runs in sandbox? | Reason                                                                     |
-| ---------- | ---------------- | -------------------------------------------------------------------------- |
-| `status`   | ✅ Yes           | Routes through daemon on socket                                            |
-| `start`    | ❌ No            | Launches Chrome & WS daemon; needs to run unsandboxed (`bin/ego-cdp start`) |
-| `stop`     | ❌ No            | Kills Chrome & WS daemon; needs to run unsandboxed (`bin/ego-cdp stop`)     |
-| `ws`       | ✅ Yes           | Routes through daemon on socket                                            |
+Use the `ego_cdp_ws` custom tool for CDP traffic. Use the CLI through bash only for lifecycle management (`start`, `status`, `stop`).
+
+| Interface | Runs in sandbox? | Reason |
+| --------- | ---------------- | ------ |
+| `../../bin/ego-cdp status` | ✅ Yes | Checks daemon/browser state and probes CDP through the socket |
+| `../../bin/ego-cdp start` | ❌ No | Launches Chrome and WS daemon; needs to run unsandboxed |
+| `../../bin/ego-cdp stop` | ❌ No | Kills Chrome and WS daemon; needs to run unsandboxed |
+| `ego_cdp_ws` tool | ✅ Yes | Calls `runWsCommand()` directly over the Unix socket |
 
 ## Lifecycle
 
@@ -22,21 +24,24 @@ description: Use Chrome CDP via ego-cdp for tab listing, navigation, JS evaluati
 - `../../bin/ego-cdp start` - start Chrome and WS daemon (detects partial state and restarts if needed) - needs sandbox escalation
 - `../../bin/ego-cdp stop` - stop Chrome and WS daemon - needs sandbox escalation
 
-## CDP Access - allowed by sandbox, no escalation
+## CDP Access - via custom tool, allowed by sandbox
 
 All commands use the flattened session model on the browser endpoint. Use `sessionId` to target specific pages.
 
-`../../bin/ego-cdp ws '<message>' [--timeout=ms] [--output=FILE]` - allowed by sandbox, no escalation needed
+- `ego_cdp_ws` with `{ message, timeout? }` - allowed by sandbox, no escalation needed
 
 ### Examples (non-exhaustive)
 
-- `../../bin/ego-cdp ws '{"id":1,"method":"Browser.getVersion"}'` - browser version
-- `../../bin/ego-cdp ws '{"id":1,"method":"Target.getTargets"}'` - list all tabs
-- `../../bin/ego-cdp ws '{"id":1,"method":"Target.createTarget","params":{"url":"<url>","background":true}}'` - create tab in background (no focus steal)
-- `../../bin/ego-cdp ws '{"id":1,"method":"Target.closeTarget","params":{"targetId":"<id>"}}'` - close a tab
-- `../../bin/ego-cdp ws '{"id":1,"method":"Target.attachToTarget","params":{"targetId":"<id>","flatten":true}}'` - attach to tab and get `sessionId`
-- `../../bin/ego-cdp ws '{"id":2,"sessionId":"<sessionId>","method":"Page.navigate","params":{"url":"<url>"}}'` - send target-scoped command using `sessionId`
-- `../../bin/ego-cdp ws '{"id":3,"sessionId":"<sessionId>","method":"Runtime.evaluate","params":{"expression":"document.title"}}'` - evaluate JS in a tab
+Using the custom tool:
+
+- `ego_cdp_ws` with `{"message":"{\"id\":1,\"method\":\"Browser.getVersion\"}"}` - browser version
+- `ego_cdp_ws` with `{"message":"{\"id\":1,\"method\":\"Target.getTargets\"}"}` - list all tabs
+- `ego_cdp_ws` with `{"message":"{\"id\":1,\"method\":\"Target.createTarget\",\"params\":{\"url\":\"<url>\",\"background\":true}}"}` - create tab in background (no focus steal)
+- `ego_cdp_ws` with `{"message":"{\"id\":1,\"method\":\"Target.closeTarget\",\"params\":{\"targetId\":\"<id>\"}}"}` - close a tab
+- `ego_cdp_ws` with `{"message":"{\"id\":1,\"method\":\"Target.attachToTarget\",\"params\":{\"targetId\":\"<id>\",\"flatten\":true}}"}` - attach to tab and get `sessionId`
+- `ego_cdp_ws` with `{"message":"{\"id\":2,\"sessionId\":\"<sessionId>\",\"method\":\"Page.navigate\",\"params\":{\"url\":\"<url>\"}}"}` - send target-scoped command using `sessionId`
+- `ego_cdp_ws` with `{"message":"{\"id\":3,\"sessionId\":\"<sessionId>\",\"method\":\"Runtime.evaluate\",\"params\":{\"expression\":\"document.title\"}}"}` - evaluate JS in a tab
+
 
 ## General instructions
 
@@ -48,7 +53,7 @@ All commands use the flattened session model on the browser endpoint. Use `sessi
   - Last resort: raw events such as `dispatchKeyEvent`, `dispatchMouseEvent`
   - Check input/checkbox values before interaction - otherwise you might clobber or make incorrect changes
 - DO NOT use arbitrary network calls - they will be blocked by sandbox
-- `--output=FILE` outputs raw CDP JSON and does not perform any conversions
+- large responses are truncated like pi's bash tool and the full output path is shown in the tool result
 - Prefer in-page data extraction (`Runtime.evaluate` + `fetch`/DOM/script parsing) for massive tasks.
   - Rationale: in-page requests run in the site context (same cookies/session/origin/CORS behavior), so they are usually more reliable than external HTTP calls.
   - Use this for pagination, bulk extraction, hidden metadata (`script` blobs / JSON), and export-style endpoints.
