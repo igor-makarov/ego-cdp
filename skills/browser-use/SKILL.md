@@ -28,7 +28,7 @@ Use the `ego_cdp_ws` custom tool for CDP traffic. Use the CLI through bash only 
 
 All commands use the flattened session model on the browser endpoint. Use `sessionId` to target specific pages.
 
-- `ego_cdp_ws` with `{ message, timeout? }` - allowed by sandbox, no escalation needed; inline output is truncated to the last 2000 lines or 50KB, and full output is saved to a temp file when truncated
+- `ego_cdp_ws` with `{ message, timeout? }` - allowed by sandbox, no escalation needed
 
 ### Examples (non-exhaustive)
 
