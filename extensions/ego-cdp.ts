@@ -229,7 +229,7 @@ const egoCdpWsTool = defineTool({
 		}),
 		timeout: Type.Optional(
 			Type.Number({
-				description: "Timeout in milliseconds. Defaults to 60000.",
+				description: "Timeout in seconds. Defaults to 60.",
 				minimum: 1,
 			}),
 		),
@@ -242,7 +242,7 @@ const egoCdpWsTool = defineTool({
 		const meta: string[] = [];
 		if (cdp.id) meta.push(`id=${cdp.id}`);
 		if (cdp.sessionId) meta.push(`session=${shortId(cdp.sessionId)}`);
-		if (args.timeout && args.timeout !== 60000) meta.push(`timeout=${args.timeout}ms`);
+		if (args.timeout && args.timeout !== 60) meta.push(`timeout=${args.timeout}s`);
 		if (meta.length) text += " " + theme.fg("dim", `(${meta.join(", ")})`);
 
 		if (cdp.params && typeof cdp.params === "object" && Object.keys(cdp.params as object).length > 0) {
@@ -252,11 +252,11 @@ const egoCdpWsTool = defineTool({
 		return new Text(text, 0, 0);
 	},
 	async execute(_toolCallId, params) {
-		const timeout = params.timeout ?? 60000;
+		const timeout = params.timeout ?? 60;
 		try {
 			const response = await runWsCommand({
 				message: params.message,
-				timeout,
+				timeout: timeout * 1000,
 			});
 			return finalizeSuccessOutput(response, timeout);
 		} catch (error) {
