@@ -17,6 +17,9 @@
     "@anthropic-ai/sandbox-runtime": "^0.0.39"
   },
   "pi": {
+    "extensions": [
+      "./extensions"
+    ],
     "skills": [
       "./skills"
     ]

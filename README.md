@@ -102,13 +102,19 @@ The indirection through Caddy exists so that sandbox network policies can allowl
 
 ## pi Integration
 
-ego-cdp is a [pi package](https://github.com/mariozechner/pi-coding-agent) that ships a `browser-use` skill. When installed, pi agents can discover and use Chrome automation capabilities through the skill interface.
+ego-cdp is a [pi package](https://github.com/mariozechner/pi-coding-agent) that ships both:
+
+- a `browser-use` skill
+- an `ego_cdp_ws` custom extension tool that exposes `runWsCommand()` directly to pi
+
+When installed, pi agents can use the skill for workflow guidance and the custom tool for raw CDP message exchange without shelling out to `ego-cdp ws`.
 
 ```jsonc
 // package.json
 {
   "keywords": ["pi-package"],
   "pi": {
+    "extensions": ["./extensions"],
     "skills": ["./skills"],
   },
 }
