@@ -1,6 +1,6 @@
 ---
-name: browser-use
-description: Use Chrome CDP via ego-cdp for tab listing, navigation, JS evaluation, and UI automation
+name: ego-cdp
+description: Use this to access Chrome using CDP via `ego-cdp` CLI for tab listing, navigation, JS evaluation, and UI automation
 ---
 
 # Browser Use
