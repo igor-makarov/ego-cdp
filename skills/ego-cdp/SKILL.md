@@ -9,13 +9,13 @@ description: Use this to access Chrome using CDP via `ego-cdp` CLI for tab listi
 
 `ego-cdp` is a CLI that allows using a browser via CDP from within a sandboxed environment. It runs a persistent WebSocket daemon that keeps a connection to Chrome's browser endpoint open between calls. All CDP commands go through a single Unix socket.
 
-Path to `ego-cdp` (relative to this skill): `../../bin/ego-cdp`
+Path to `ego-cdp` (relative to this skill file): `../../bin/ego-cdp`
 
 | Subcommand | Runs in sandbox? | Reason                                                                     |
 | ---------- | ---------------- | -------------------------------------------------------------------------- |
 | `status`   | ✅ Yes           | Routes through daemon on socket                                            |
-| `start`    | ❌ No            | Launches Chrome & WS daemon; needs to run unsandboxed (`bin/ego-cdp start`) |
-| `stop`     | ❌ No            | Kills Chrome & WS daemon; needs to run unsandboxed (`bin/ego-cdp stop`)     |
+| `start`    | ❌ No            | Launches Chrome & WS daemon; needs to run unsandboxed (`ego-cdp start`)    |
+| `stop`     | ❌ No            | Kills Chrome & WS daemon; needs to run unsandboxed (`ego-cdp stop`)        |
 | `ws`       | ✅ Yes           | Routes through daemon on socket                                            |
 
 ## Lifecycle
