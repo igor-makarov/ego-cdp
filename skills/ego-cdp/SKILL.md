@@ -43,6 +43,7 @@ All commands use the flattened session model on the browser endpoint. Use `sessi
 ## General instructions
 
 - DO NOT reuse an open tab unless explicitly asked - these may be in use by another agent
+- Treat CDP `sessionId` as ephemeral - it can become invalid arbitrarily; prefer getting a fresh one by attaching to a target
 - Prefer not to take screenshots - it is slower
 - YOU MUST Use `Input.*` commands to interact with UI elements - other ways are a waste of time
   - Prefer: synthesized commands such as `synthesizeTapGesture`, `insertText`, `synthesizeScrollGesture`
